@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>颜色选择器</title>
+    <style>
+        .container {
+            width: 100%;
+            height: 800px;
+            position: relative;
+            background: linear-gradient(180deg, #003afa 0%, #fff 53%, #1ebe58 100%);
+        }
+
+        .title {
+            font-weight: bold;
+            margin-left: 45%;
+            font-size: 2rem;
+            margin-bottom: 50px;
+        }
+
+        #color-picker {
+            position: absolute;
+            left: 200px;
+            top: 100px;
+        }
+
+        #color-picker2 {
+            position: absolute;
+            right: 200px;
+            top: 100px;
+        }
+
+        #color-picker3 {
+            position: absolute;
+            left: 200px;
+            bottom: 100px;
+        }
+
+        #color-picker4 {
+            position: absolute;
+            right: 200px;
+            bottom: 100px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="title">选择颜色</div>
+    <div class="container">
+        <div id="color-picker"></div>
+        <div id="color-picker2"></div>
+        <div id="color-picker3"></div>
+        <div id="color-picker4"></div>
+    </div>
+
+</body>
+<script type="module">
+    import XLColorPicker from './xl-color-picker.js'
+    let bg = document.querySelector('.container');
+
+    let a = new XLColorPicker({
+        id: '#color-picker',
+        eleColor: "#3367d1",
+        canMove: true,
+        getCurrentColor: function (color) {
+            bg.style.background = color;
+        },
+    })
+
+    let b = new XLColorPicker({
+        id: '#color-picker2',
+        eleColor: "#010101",
+        canMove: true,
+        getCurrentColor: function (color) {
+            bg.style.background = color;
+        },
+    })
+
+    let c = new XLColorPicker({
+        id: '#color-picker3',
+        eleColor: "#7b99fd",
+        canMove: true,
+        getCurrentColor: function (color) {
+            bg.style.background = color;
+        },
+    })
+
+    let d = new XLColorPicker({
+        id: '#color-picker4',
+        eleColor: "#f3f5fa",
+        canMove: false,
+        getCurrentColor: function (color) {
+            bg.style.background = color;
+        },
+    })
+</script>
+
+</html>
