@@ -436,10 +436,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
 # 问题描述
 ## 打开html报错（Failed to load resource: the server responded with a status of 404 (Not Found)）
+问题描述：\
+因为浏览器默认只支持本地文件，所以需要设置允许跨域访问，才能访问到本地文件。
 
-
-
-
+解决办法：\
+1. 使用 `--allow-file-access-from-files` 参数。
+2. 将html和js文件脱出到一个目录，然后通过vscode的Live Server打开就可以了 
 
 
 # 效果展示
