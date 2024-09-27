@@ -123,7 +123,7 @@ user-select: none;
 使用工具类
 
 ### 色板的实现
-![alt text](取色器画板.png)
+![alt text](./img/取色器画板.png)
 
 
 ### 吸管拾色器
@@ -434,6 +434,16 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 ```
 
+# 问题描述
+## 打开html报错（Failed to load resource: the server responded with a status of 404 (Not Found)）
+
+
+# 效果展示：
+实现效果
+![alt text](img/效果.png)
+
+取色器效果
+![alt texe](img/取色器.png)
 
 
 # 注释
