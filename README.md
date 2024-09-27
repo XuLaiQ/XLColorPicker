@@ -141,7 +141,7 @@ user-select: none;
 3. 颜色数据获取：
 
 根据用户选择的屏幕坐标，吸管工具需要获取该位置的颜色数据。这通常涉及到以下几个技术：
-  
+
 a. Canvas API：
 
 如果吸管工具在一个Canvas元素上操作，可以使用CanvasRenderingContext2D.getImageData()方法来获取像素数据。
@@ -438,11 +438,17 @@ document.addEventListener('DOMContentLoaded', function () {
 ## 打开html报错（Failed to load resource: the server responded with a status of 404 (Not Found)）
 
 
-# 效果展示：
-实现效果
+
+
+
+
+# 效果展示
+## 实现效果
+
 ![alt text](img/效果.png)
 
-取色器效果
+## 取色器效果
+
 ![alt texe](img/取色器.png)
 
 
