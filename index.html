@@ -6,11 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>颜色选择器</title>
     <style>
+        html {
+            background: linear-gradient(90deg, #fafafa 0%, #00f50c52 54%, #00f50ccf 100%);
+        }
+
         .container {
+            display: grid;
+            grid-template-columns: auto auto;
             width: 100%;
-            height: 800px;
-            position: relative;
-            background: linear-gradient(180deg, #003afa 0%, #fff 53%, #1ebe58 100%);
+            height: 80vh;
+            grid-gap: 20px;
         }
 
         .title {
@@ -19,80 +24,69 @@
             font-size: 2rem;
             margin-bottom: 50px;
         }
-
-        #color-picker {
-            position: absolute;
-            left: 200px;
-            top: 100px;
-        }
-
-        #color-picker2 {
-            position: absolute;
-            right: 200px;
-            top: 100px;
-        }
-
-        #color-picker3 {
-            position: absolute;
-            left: 200px;
-            bottom: 100px;
-        }
-
-        #color-picker4 {
-            position: absolute;
-            right: 200px;
-            bottom: 100px;
-        }
     </style>
 </head>
 
 <body>
     <div class="title">选择颜色</div>
     <div class="container">
-        <div id="color-picker"></div>
-        <div id="color-picker2"></div>
-        <div id="color-picker3"></div>
-        <div id="color-picker4"></div>
+        <div>
+            <div id="color-picker1"></div>
+        </div>
+        <div>
+            <div id="color-picker2"></div>
+        </div>
+        <div>
+            <div id="color-picker3"></div>
+        </div>
+        <div>
+            <div id="color-picker4"></div>
+        </div>
     </div>
 
 </body>
 <script type="module">
-    import XLColorPicker from './xl-color-picker.js'
-    let bg = document.querySelector('.container');
+    import XLColorPicker from './xl-color-picker-m.js'
+    let bg = document.querySelectorAll('.container > div');
 
     let a = new XLColorPicker({
-        id: '#color-picker',
+        id: 'color-picker1',
         eleColor: "#3367d1",
         canMove: true,
         getCurrentColor: function (color) {
-            bg.style.background = color;
+            bg[0].style.background = color;
+            console.log(color);
         },
     })
 
     let b = new XLColorPicker({
-        id: '#color-picker2',
+        id: 'color-picker2',
         eleColor: "#010101",
         canMove: true,
         getCurrentColor: function (color) {
-            bg.style.background = color;
+            bg[1].style.background = color;
+            console.log(color);
         },
     })
 
     let c = new XLColorPicker({
-        id: '#color-picker3',
+        id: 'color-picker3',
         eleColor: "#7b99fd",
         canMove: true,
         getCurrentColor: function (color) {
-            bg.style.background = color;
+            bg[2].style.background = color;
+            console.log(color);
+
         },
     })
 
     let d = new XLColorPicker({
-        id: '#color-picker4',
+        id: 'color-picker4',
         eleColor: "#f3f5fa",
         canMove: false,
         getCurrentColor: function (color) {
-            bg.style.background = color;
+            bg[3].style.background = color;
+            console.log(color);
         },
     })
 </script>

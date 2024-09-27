@@ -392,6 +392,8 @@ _colorFormat.prototype = {
 
 // 初始化参数
 let option = {
+    parentDOM: document.body,  // 对于vue组件（避免在html中重复添加多个取色器）
+
     isShow: false,  // 是否显示取色器
     canMove: true,  // 是否可以拖拽取色器
     isDragging: false,  // 是否正在拖拽
@@ -400,12 +402,12 @@ let option = {
 
     id: '',  // 传入的DOM  id
     ele: null,  // id对应的DOM对象
-    eleWidth: 30, // 对应DOM的宽度
-    eleHeight: 30, // 对应DOM的高度
-    eleColor: '#d8d8d8',  // 对应DOM的颜色
+    eleWidth: 20, // 对应DOM的宽度
+    eleHeight: 20, // 对应DOM的高度
+    eleColor: '#46be69',  // 对应DOM的颜色
 
-    pickerWidth: 300,  // 颜色选择器宽度
-    pickerHeight: 500,  // 颜色选择器高度
+    pickerWidth: 280,  // 颜色选择器宽度
+    pickerHeight: 450,  // 颜色选择器高度
 
     curruntColorModule: "",  // 当前选择的是原色还是渐变色
     currentColor: '',  // 记录当前的颜色
@@ -451,6 +453,8 @@ function XLColorPicker(options) {
     Object.keys(this.option).forEach(key => {
         this[key] = this.option[key];
     });
+    // 渐变数组重置
+    this.gradientDIVList = [];
 
     this.init();
 }
@@ -464,13 +468,13 @@ XLColorPicker.prototype = {
 
         // 初始化事件
         this.initEvent();
+
         // 初始化取色器块
         this.initmodule();
 
         // 给dom元素绑定事件
         this.bindEvent();
 
-        // 给渐变条添加两个滑块
         this.addGradientSlider(0, this.leftSliderColor);
         this.addGradientSlider(this.sliderBarWidth, this.rightSliderColor);
 
@@ -503,13 +507,18 @@ XLColorPicker.prototype = {
         let that = this;
 
         // 获取颜色选择器对应的DOM对象
-        this.ele = document.querySelector(this.id);
+        if (typeof this.id == "string") {
+            this.ele = document.querySelector(`#${this.id}`);
+        } else {
+            this.ele = this.id;
+        }
 
         // 添加样式
         this.ele.style.cursor = "pointer";
         this.ele.style.width = this.eleWidth + "px";
         this.ele.style.height = this.eleHeight + "px";
-        this.ele.style.backgroundColor = this.eleColor;
+
+        this.ele.style.background = this.eleColor;
 
         // 添加点击事件
         this.ele.addEventListener('click', function (e) {
@@ -1056,7 +1065,7 @@ XLColorPicker.prototype = {
         style.appendChild(document.createTextNode(css));
         document.head.appendChild(style);
 
-        document.body.appendChild(temColorPicker);
+        this.parentDOM.appendChild(temColorPicker);
 
         // 获取到操作的dom
         let dom = {
@@ -1190,6 +1199,7 @@ XLColorPicker.prototype = {
 
         this.showLinear.addEventListener('click', function () {
             that.curruntColorModule = this;
+            that.ele.style.background = that.eleColor;
             if (this.classList.contains('active')) {
                 this.classList.remove('active');
             } else {
@@ -1201,7 +1211,7 @@ XLColorPicker.prototype = {
 
         // =====================================================
         // 监听渐变条的点击事件
-        this.linearSliderBar.addEventListener("click", function (e) {
+        this.linearSliderBar.addEventListener("mousedown", function (e) {
             // 阻止冒泡
             e.stopPropagation();
             if (!that.curruntColorModule.isEqualNode(that.showLinear)) return;
@@ -1258,10 +1268,10 @@ XLColorPicker.prototype = {
             if (!that.isValidColor(color.trim())) {
                 that.colorInput.value = "";
                 // 抛出异常
-                throw Error("输入的颜色格式不正确");
+                console.error("输入的颜色格式不正确");
+                return;
+                // throw Error("输入的颜色格式不正确");
             }
-            console.log("dasdsad");
-
 
             // 颜色格式转换
             let hexColor = colorFormat({ color, format: 'hex' }).complete;
@@ -1269,7 +1279,9 @@ XLColorPicker.prototype = {
             if (hexColor === null || hexColor === undefined) {
                 that.setColorInputValue("");
                 // 提示错误信息
-                throw Error("输入的颜色格式不正确");
+                console.error("输入的颜色格式不正确");
+                return;
+                // throw Error("输入的颜色格式不正确");
             }
 
             // 设置input的值
@@ -1349,7 +1361,9 @@ XLColorPicker.prototype = {
      */
     extractHSLAValues(str) {
         if (typeof str !== 'string') {
-            throw Error('Invalid input type');
+            console.error('Invalid input type');
+            return;
+            // throw Error('Invalid input type');
         }
         const regex = /hsla\((\d+),\s*(\d+)%,\s*(\d+)%,\s*(\d+(?:\.\d+)?)\)/;
         const match = str.match(regex);
@@ -1361,7 +1375,9 @@ XLColorPicker.prototype = {
                 opacity: match[4]
             };
         } else {
-            throw Error('Invalid hsla format');
+            console.error('Invalid hsla format');
+            return;
+            // throw Error('Invalid hsla format');
         }
     },
 
@@ -1411,8 +1427,9 @@ XLColorPicker.prototype = {
                 this.currentSelectedSliderObj.color = value;
                 this.setLinearGradient();
             } else {
-                console.log("没有选择滑块");
-                throw Error("没有选择滑块");
+                console.error("没有选择滑块");
+                return;
+                // throw Error("没有选择滑块");
             }
         }
         this.getCurrentColor(this.colorInput.value);
@@ -1669,6 +1686,22 @@ XLColorPicker.prototype = {
         return list;
     },
 
+    // 渐变滑块是否被选中状态改变
+    sliderStateChange(newSlider) {
+        // 删除所有的被选中状态
+        this.gradientDIVList.map(item => {
+            item.slider.classList.remove("slider-selected");
+        })
+        newSlider.classList.add("slider-selected");
+        // 当前选择的滑块
+        this.currentSelectedSlider = newSlider;
+        // 找出当前点击的滑块    获取到颜色值
+        this.gradientDIVList.forEach(obj => {
+            if (obj.slider.isEqualNode(newSlider)) {
+                this.currentSelectedSliderObj = obj;
+            }
+        });
+    },
 
     /** 添加渐变滑块的函数
      * @param {*} position 渐变条的位置
@@ -1681,17 +1714,7 @@ XLColorPicker.prototype = {
         newGradientSlider.addEventListener("click", function (e) {
             e.stopPropagation();
 
-            // 删除所有的被选中状态
-            that.gradientDIVList.map(item => {
-                item.slider.classList.remove("slider-selected");
-            })
-            newGradientSlider.classList.add("slider-selected")
-            that.currentSelectedSlider = newGradientSlider;
-            that.gradientDIVList.forEach(obj => {
-                if (obj.slider.isEqualNode(newGradientSlider)) {
-                    that.currentSelectedSliderObj = obj;
-                }
-            });
+            that.sliderStateChange(newGradientSlider);
         });
         newGradientSlider.classList.add("xl-color-picker-linear-slider-bar-slide");
         this.linearSliderBar.appendChild(newGradientSlider);
@@ -1723,17 +1746,11 @@ XLColorPicker.prototype = {
         newGradientSlider.addEventListener('mousedown', function (e) {
             e.stopPropagation();
             if (!that.curruntColorModule.isEqualNode(that.showLinear)) {
-                throw "当前颜色模式不是线性渐变";
+                console.error("当前颜色模式不是线性渐变");
+                return;
+                // throw "当前颜色模式不是线性渐变";
             }
-            newGradientSlider.classList.add("slider-selected")
-            // 当前选择的滑块
-            that.currentSelectedSlider = newGradientSlider;
-            // 找出当前点击的滑块    获取到颜色值
-            that.gradientDIVList.forEach(obj => {
-                if (obj.slider.isEqualNode(newGradientSlider)) {
-                    that.currentSelectedSliderObj = obj;
-                }
-            });
+            that.sliderStateChange(newGradientSlider);
             document.addEventListener('mousemove', onMouseMove);
             document.addEventListener('mouseup', onMouseUp);
         });
@@ -1759,7 +1776,6 @@ XLColorPicker.prototype = {
         }
 
         function onMouseUp() {
-            newGradientSlider.classList.remove("slider-selected")
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('mouseup', onMouseUp);
         }
@@ -1777,11 +1793,20 @@ XLColorPicker.prototype = {
         if (this.curruntColorModule.isEqualNode(this.showLinear)) {
             this.colorInput.style.fontSize = "12px";
             this.colorInput.value = g;
+        };
+        if (this.curruntColorModule.isEqualNode(this.showLinear)) {
+            this.getCurrentColor(this.colorInput.value);
+            this.ele.style.background = this.colorInput.value;
         }
     },
 
     // 删除选中滑块的函数
     deleteSelectedSlider() {
+        if (!this.curruntColorModule.isEqualNode(this.showLinear)) {
+            console.error("当前颜色模式不是线性渐变");
+            return;
+            // throw "当前颜色模式不是线性渐变";
+        };
         if (this.gradientDIVList.length > 2) {
             if (!this.currentSelectedSlider) {
                 // 获取到最后一个元素
@@ -1797,13 +1822,18 @@ XLColorPicker.prototype = {
             }
             this.setLinearGradient(); // 更新渐变条
         } else {
-            console.log("最少两个滑块");
+            console.error("最少两个滑块");
             return;
         }
     },
 
     // 选择渐变方向
     rotateGradient(deg = 90) {
+        if (!this.curruntColorModule.isEqualNode(this.showLinear)) {
+            console.error("当前颜色模式不是线性渐变");
+            return;
+            // throw "当前颜色模式不是线性渐变";
+        }
         // 旋转
         this.currentDegree = (this.currentDegree + deg) % 360;
         this.setLinearGradient();
@@ -1846,6 +1876,7 @@ XLColorPicker.prototype = {
         }, function (err) {
             alert('复制失败');
             console.error('Async copy failed: ', err);
+            return;
         });
     },
 
