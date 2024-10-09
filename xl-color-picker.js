@@ -392,7 +392,7 @@ _colorFormat.prototype = {
 
 // 初始化参数
 let option = {
-    parentDOM: document.body,  // 对于vue组件（避免在html中重复添加多个取色器）
+    // parentDOM: document.body,  // 对于vue组件（避免在html中重复添加多个取色器）
 
     isShow: false,  // 是否显示取色器
     canMove: true,  // 是否可以拖拽取色器
@@ -1065,7 +1065,7 @@ XLColorPicker.prototype = {
         style.appendChild(document.createTextNode(css));
         document.head.appendChild(style);
 
-        this.parentDOM.appendChild(temColorPicker);
+        document.body.appendChild(temColorPicker);
 
         // 获取到操作的dom
         let dom = {
@@ -1428,7 +1428,8 @@ XLColorPicker.prototype = {
                 this.setLinearGradient();
             } else {
                 console.error("没有选择滑块");
-                return;
+                this.colorInput.value = value;
+                // return;
                 // throw Error("没有选择滑块");
             }
         }
