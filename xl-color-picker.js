@@ -128,64 +128,48 @@ class ColorCircularQueue {
  * @param {string} options.color 待转换的颜色值
  * @param {string} options.format 转换颜色的格式
  */
-let colorFormat = function (options) {
-    return new _colorFormat(options);
-};
-let _colorFormat = function (options) {
-    let result,
-        color = options && options.color && options.color.replace(/\s/g, "").toLowerCase() || "#fff", // color ：默认值为 "#fff"
-        format = options && options.format && options.format.replace(/\s/g, "").toLowerCase() || "rgb", // format ：默认值为 "rgb"
-        rgbType = format.indexOf("rgba") == -1 ? 0 : 1, // rgbType 0表示rgb，1表示rgba
-        hslType = format.indexOf("hsla") == -1 ? 0 : 1; // hslType 0表示hsl，1表示hsla
-    if (color.indexOf("#") > -1) {
-        if (format == "hex") { // hex 转 hex
-            result = this.hexToRgb(color);
-            result = this.rgbToHex(result);
-        } else if (format.indexOf("rgb") > -1) { // hex 转 rgb/rgba
-            result = this.hexToRgb(color, rgbType);
-        } else if (format.indexOf("hsl") > -1) { // hex 转 hsl/hsla
-            result = this.hexToRgb(color);
-            result = this.rgbToHsl(result, hslType);
-        }
-    } else if (color.indexOf("rgb") > -1) {
-        result = this.getRgb(color, rgbType); // rgb 转 rgb/rgba
-        if (format == "hex") { // rgb/rgba 转 hex
-            result = this.rgbToHex(result);
-        } else if (format.indexOf("hsl") > -1) { // rgb/rgba 转 hsl
-            result = this.rgbToHsl(result, hslType);
-        }
-    } else if (color.indexOf("hsl") > -1) {
-        result = this.getHsl(color, hslType);
-        result = this.hslToRgb(result, rgbType); // hsl 转 rgb/rgba
-        if (format == "hex") { // hsl 转 hex
-            result = this.rgbToHex(result);
-        } else if (format.indexOf("hsl") > -1) { // hsl 转 hsl/hsla
-            result = this.rgbToHsl(result, hslType);
-        }
-    } else {
-        let defineColor = this.defineColor,
-            resultRgb;
-        for (let i = 0, len = defineColor.length; i < len; i++) {
-            if (color == defineColor[i].name) {
-                resultRgb = defineColor[i].hex;
+let colorFormat = function e(e) {
+    return new _colorFormat(e);
+}
+var _colorFormat = function (e) {
+    var r,
+        t = (e && e.color && e.color.replace(/\s/g, "").toLowerCase()) || "#f00",
+        n = (e && e.format && e.format.replace(/\s/g, "").toLowerCase()) || "rgb",
+        o = -1 == n.indexOf("rgba") ? 0 : 1,
+        e = -1 == n.indexOf("hsla") ? 0 : 1;
+    if (-1 < t.indexOf("#"))
+        "hex" == n
+            ? ((r = this.hexToRgb(t)), (r = this.rgbToHex(r)))
+            : -1 < n.indexOf("rgb")
+                ? (r = this.hexToRgb(t, o))
+                : -1 < n.indexOf("hsl") &&
+                ((r = this.hexToRgb(t)), (r = this.rgbToHsl(r, e)));
+    else if (-1 < t.indexOf("rgb"))
+        (r = this.getRgb(t, o)),
+            "hex" == n
+                ? (r = this.rgbToHex(r))
+                : -1 < n.indexOf("hsl") && (r = this.rgbToHsl(r, e));
+    else if (-1 < t.indexOf("hsl"))
+        (r = this.getHsl(t, e)),
+            (r = this.hslToRgb(r, o)),
+            "hex" == n
+                ? (r = this.rgbToHex(r))
+                : -1 < n.indexOf("hsl") && (r = this.rgbToHsl(r, e));
+    else {
+        for (var s, a = this.defineColor, i = 0, h = a.length; i < h; i++)
+            if (t == a[i].name) {
+                s = a[i].hex;
                 break;
             }
-        }
-        if (resultRgb && resultRgb.length > 0) {
-            if (format == "hex") { // hex 转 hex
-                result = this.hexToRgb(resultRgb);
-                result = this.rgbToHex(result);
-            } else if (format.indexOf("rgb") > -1) { // hex 转 rgb/rgba
-                result = this.hexToRgb(resultRgb, rgbType);
-            } else if (format.indexOf("hsl") > -1) { // hex 转 hsl/hsla
-                result = this.hexToRgb(resultRgb);
-                result = this.rgbToHsl(result, hslType);
-            }
-        } else {
-            alert("参数color暂未定义");
-        }
+        if (!(s && 0 < s.length)) return !1;
+        "hex" == n
+            ? ((r = this.hexToRgb(s)), (r = this.rgbToHex(r)))
+            : -1 < n.indexOf("rgb")
+                ? (r = this.hexToRgb(s, o))
+                : -1 < n.indexOf("hsl") &&
+                ((r = this.hexToRgb(s)), (r = this.rgbToHsl(r, e)));
     }
-    return result;
+    return r;
 };
 _colorFormat.prototype = {
     constructor: this,
@@ -198,201 +182,187 @@ _colorFormat.prototype = {
         { name: "blue", hex: "#00f" },
         { name: "violet", hex: "#ee82ee" },
         { name: "black", hex: "#000" },
-        { name: "white", hex: "#fff" }
+        { name: "white", hex: "#fff" },
     ],
-    getRgb: function (rgb, type) {
-        /**
-         * 传入字符串的rgb，如 "rgb(255,0,255)" ，获取rgb的各个参数值
-         */
-        rgb = rgb.toLowerCase();
-        let flag = rgb.indexOf("rgba") == -1 ? 0 : 1; // flag 0表示rgb，1表示rgba
-        rgb = flag ? rgb.replace("rgba", "") : rgb.replace("rgb", "");
-        rgb = rgb.replace(/\s/g, "").split(",");
-        let red = Number(rgb[0].slice(1)),
-            green = Number(rgb[1]),
-            blue = flag ? Number(rgb[2]) : Number(rgb[2].slice(0, -1)),
-            opacity = flag ? (Number(rgb[3].slice(0, -1)) > 1 ? 1 : Number(rgb[3].slice(0, -1))) : 1;
+    getRgb: function (e, r) {
+        var t = -1 == (e = e.toLowerCase()).indexOf("rgba") ? 0 : 1;
+        e = (e = t ? e.replace("rgba", "") : e.replace("rgb", ""))
+            .replace(/\s/g, "")
+            .split(",");
+        var n = Number(e[0].slice(1)),
+            o = Number(e[1]),
+            s = t ? Number(e[2]) : Number(e[2].slice(0, -1)),
+            e = !t || 1 < Number(e[3].slice(0, -1)) ? 1 : Number(e[3].slice(0, -1));
         return {
-            r: red,
-            g: green,
-            b: blue,
-            o: opacity,
-            complete: type ?
-                ("rgba(" + [red, green, blue, opacity].join(",") + ")") :
-                ("rgb(" + [red, green, blue].join(",") + ")")
-        }
+            r: n,
+            g: o,
+            b: s,
+            o: e,
+            complete: r
+                ? "rgba(" + [n, o, s, e].join(",") + ")"
+                : "rgb(" + [n, o, s].join(",") + ")",
+        };
     },
-    getHsl: function (hsl, type) {
-        /**
-         * 传入字符串的hsl，如 "hsl(300,100%,50%)" ，获取hsl的各个参数值
-         */
-        hsl = hsl.toLowerCase();
-        let flag = hsl.indexOf("hsla") == -1 ? 0 : 1; // flag 0表示hsl，1表示hsla
-        hsl = flag ? hsl.replace("hsla", "") : hsl.replace("hsl", "");
-        hsl = hsl.replace(/\s/g, "").split(",");
-        let h = Number(hsl[0].slice(1)),
-            s = parseInt(hsl[1]),
-            l = flag ? parseInt(hsl[2]) : parseInt(hsl[2].slice(0, -1)),
-            opacity = flag ? (Number(hsl[3].slice(0, -1)) > 1 ? 1 : Number(hsl[3].slice(0, -1))) : 1;
+    getHsl: function (e, r) {
+        var t = -1 == (e = e.toLowerCase()).indexOf("hsla") ? 0 : 1;
+        e = (e = t ? e.replace("hsla", "") : e.replace("hsl", ""))
+            .replace(/\s/g, "")
+            .split(",");
+        var n = Number(e[0].slice(1)),
+            o = parseInt(e[1]),
+            s = t ? parseInt(e[2]) : parseInt(e[2].slice(0, -1)),
+            e = !t || 1 < Number(e[3].slice(0, -1)) ? 1 : Number(e[3].slice(0, -1));
         return {
-            h: h,
-            s: s / 100,
-            l: l / 100,
-            o: opacity,
-            complete: type ?
-                ("hsla(" + [h, s, l, opacity].join(",") + ")") :
-                ("hsl(" + [h, s, l].join(",") + ")")
-        }
+            h: n,
+            s: o / 100,
+            l: s / 100,
+            o: e,
+            complete: r
+                ? "hsla(" + [n, o, s, e].join(",") + ")"
+                : "hsl(" + [n, o, s].join(",") + ")",
+        };
     },
-    rgbToHex: function (rgb) {
-        /**
-         * 传入通过getRgb获取的rgb对象，将其转换为hex格式
-         */
-        let red = Number(rgb.r).toString(16),
-            green = Number(rgb.g).toString(16),
-            blue = Number(rgb.b).toString(16),
-            opacity = Math.round(rgb.o * 255).toString(16),
-            simpleType = 0; // 转换之后的HEX是否可以简化，也就是说6位转为3位，或者8位转为4位
-        red.length < 2 && (red = 0 + red);
-        green.length < 2 && (green = 0 + green);
-        blue.length < 2 && (blue = 0 + blue);
-        opacity.length < 2 && (opacity = 0 + opacity);
-        red[0] == red[1] && green[0] == green[1] && blue[0] == blue[1] && opacity[0] == opacity[1] && (simpleType = 1);
-        return {
-            r: red,
-            g: green,
-            b: blue,
-            o: opacity,
-            complete: simpleType ?
-                ("#" + red[0] + green[0] + blue[0] + (rgb.o == 1 ? "" : opacity)) :
-                ("#" + red + green + blue + (rgb.o == 1 ? "" : opacity))
-        }
-    },
-    rgbToHsl: function (rgb, type) {
-        /**
-         * 传入通过getRgb获取的rgb对象，将其转换为hsl格式
-         */
-        let r = Number(rgb.r) / 255,
-            g = Number(rgb.g) / 255,
-            b = Number(rgb.b) / 255,
-            o = Number(rgb.o),
-            max = Math.max(r, g, b),
-            min = Math.min(r, g, b),
-            h, s, l = (max + min) / 2;
-        if (max == min) {
-            h = s = 0;
-        } else {
-            let d = max - min;
-            s = l < 0.5 ? d / (max + min) : d / (2 - max - min);
-            switch (max) {
-                case r: h = (g - b) / d; break;
-                case g: h = (b - r) / d + 2; break;
-                case b: h = (r - g) / d + 4; break;
+    rgbToHex: function (e) {
+        var r = Number(e.r).toString(16),
+            t = Number(e.g).toString(16),
+            n = Number(e.b).toString(16),
+            o = Math.round(255 * e.o).toString(16);
+        return (
+            r.length < 2 && (r = 0 + r),
+            t.length < 2 && (t = 0 + t),
+            n.length < 2 && (n = 0 + n),
+            o.length < 2 && (o = 0 + o),
+            r[0] == r[1] && t[0] == t[1] && n[0] == n[1] && (o[0], o[1]),
+            {
+                r: r,
+                g: t,
+                b: n,
+                o: o,
+                complete: "#" + (r + t + n + (1 == e.o ? "" : o)),
             }
-            h = h * 60;
-            h = h < 0 ? h + 360 : h;
-        }
-        h = Math.round(h);
-        s = Math.round(s * 100) + "%";
-        l = Math.round(l * 100) + "%";
-        return {
-            h: h,
-            s: s,
-            l: l,
-            o: o,
-            complete: type ?
-                ("hsla(" + [h, s, l, o].join(",") + ")") :
-                ("hsl(" + [h, s, l].join(",") + ")")
-        }
+        );
     },
-    hexToRgb: function (hex, type) {
-        /**
-         * 传入hex格式，如 "#ff00ff" ，转换为rgb格式
-         */
-        hex = hex.replace("#", "");
-        let red, green, blue, opacity;
-        let hexsplit = hex.split("");
-        if (hex.length == 3) {
-            red = parseInt(hexsplit[0] + hexsplit[0], 16);
-            green = parseInt(hexsplit[1] + hexsplit[1], 16);
-            blue = parseInt(hexsplit[2] + hexsplit[2], 16);
-            opacity = 1;
-        } else if (hex.length == 4) {
-            red = parseInt(hexsplit[0] + hexsplit[0], 16);
-            green = parseInt(hexsplit[1] + hexsplit[1], 16);
-            blue = parseInt(hexsplit[2] + hexsplit[2], 16);
-            opacity = Math.round(parseInt(hexsplit[3] + hexsplit[3], 16) / 255 * 100) / 100;
-        } else if (hex.length == 6) {
-            red = parseInt(hexsplit[0] + hexsplit[1], 16);
-            green = parseInt(hexsplit[2] + hexsplit[3], 16);
-            blue = parseInt(hexsplit[4] + hexsplit[5], 16);
-            opacity = 1;
-        } else if (hex.length == 8) {
-            red = parseInt(hexsplit[0] + hexsplit[1], 16);
-            green = parseInt(hexsplit[2] + hexsplit[3], 16);
-            blue = parseInt(hexsplit[4] + hexsplit[5], 16);
-            opacity = Math.round(parseInt(hexsplit[6] + hexsplit[7], 16) / 255 * 100) / 100;
+    rgbToHsl: function (e, r) {
+        var t,
+            n = Number(e.r) / 255,
+            o = Number(e.g) / 255,
+            s = Number(e.b) / 255,
+            a = Number(e.o),
+            i = Math.max(n, o, s),
+            h = Math.min(n, o, s),
+            e = (i + h) / 2;
+        if (i == h) t = b = 0;
+        else {
+            var l = i - h,
+                b = e < 0.5 ? l / (i + h) : l / (2 - i - h);
+            switch (i) {
+                case n:
+                    t = (o - s) / l;
+                    break;
+                case o:
+                    t = (s - n) / l + 2;
+                    break;
+                case s:
+                    t = (n - o) / l + 4;
+            }
+            t = (t *= 60) < 0 ? t + 360 : t;
         }
         return {
-            r: red,
-            g: green,
-            b: blue,
-            o: opacity,
-            complete: type ?
-                ("rgba(" + [red, green, blue, opacity].join(",") + ")") :
-                ("rgb(" + [red, green, blue].join(",") + ")")
-        }
+            h: (t = Math.round(t)),
+            s: (b = Math.round(100 * b) + "%"),
+            l: (e = Math.round(100 * e) + "%"),
+            o: a,
+            complete: r
+                ? "hsla(" + [t, b, e, a].join(",") + ")"
+                : "hsl(" + [t, b, e].join(",") + ")",
+        };
     },
-    hslToRgb: function (hsl, type) {
-        /**
-         * 传入通过getHsl获取的Hsl对象，将其转换为rgb格式
-         */
-        let h = Number(hsl.h),
-            s = Number(hsl.s),
-            l = Number(hsl.l),
-            o = Number(hsl.o),
-            r, g, b;
-        if (s == 0) {
-            r = g = b = l;
-        } else {
-            let temp2 = l < 0.5 ? l * (1 + s) : l + s - l * s,
-                temp1 = 2 * l - temp2;
-            h /= 360;
-            let hue2rgb = function (p, q, t) {
-                if (t < 0) t += 1;
-                if (t > 1) t -= 1;
-                if (t < 1 / 6) return p + (q - p) * 6 * t;
-                if (t < 1 / 2) return q;
-                if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-                return p;
-            };
-            r = hue2rgb(temp1, temp2, h + 1 / 3);
-            g = hue2rgb(temp1, temp2, h);
-            b = hue2rgb(temp1, temp2, h - 1 / 3);
-        }
-        r = Math.round(r * 255);
-        g = Math.round(g * 255);
-        b = Math.round(b * 255);
-        return {
-            r: r,
-            g: g,
-            b: b,
-            o: o,
-            complete: type ?
-                ("rgba(" + [r, g, b, o].join(",") + ")") :
-                ("rgb(" + [r, g, b].join(",") + ")")
-        }
-    }
+    hexToRgb: function (e, r) {
+        var t,
+            n,
+            o,
+            s,
+            a = (e = e.replace("#", "")).split("");
+        return (
+            3 == e.length
+                ? ((t = parseInt(a[0] + a[0], 16)),
+                    (n = parseInt(a[1] + a[1], 16)),
+                    (o = parseInt(a[2] + a[2], 16)),
+                    (s = 1))
+                : 4 == e.length
+                    ? ((t = parseInt(a[0] + a[0], 16)),
+                        (n = parseInt(a[1] + a[1], 16)),
+                        (o = parseInt(a[2] + a[2], 16)),
+                        (s = Math.round((parseInt(a[3] + a[3], 16) / 255) * 100) / 100))
+                    : 6 == e.length
+                        ? ((t = parseInt(a[0] + a[1], 16)),
+                            (n = parseInt(a[2] + a[3], 16)),
+                            (o = parseInt(a[4] + a[5], 16)),
+                            (s = 1))
+                        : 8 == e.length &&
+                        ((t = parseInt(a[0] + a[1], 16)),
+                            (n = parseInt(a[2] + a[3], 16)),
+                            (o = parseInt(a[4] + a[5], 16)),
+                            (s = Math.round((parseInt(a[6] + a[7], 16) / 255) * 100) / 100)),
+            {
+                r: t,
+                g: n,
+                b: o,
+                o: s,
+                complete: r
+                    ? "rgba(" + [t, n, o, s].join(",") + ")"
+                    : "rgb(" + [t, n, o].join(",") + ")",
+            }
+        );
+    },
+    hslToRgb: function (e, r) {
+        var t,
+            n,
+            o,
+            s = Number(e.h),
+            a = Number(e.s),
+            i = Number(e.l),
+            h = Number(e.o);
+        return (
+            0 == a
+                ? (t = n = o = i)
+                : ((t = (e = function (e, r, t) {
+                    return (
+                        t < 0 && (t += 1),
+                        1 < t && --t,
+                        t < 1 / 6
+                            ? e + 6 * (r - e) * t
+                            : t < 0.5
+                                ? r
+                                : t < 2 / 3
+                                    ? e + (r - e) * (2 / 3 - t) * 6
+                                    : e
+                    );
+                })(
+                    (a = 2 * i - (i = i < 0.5 ? i * (1 + a) : i + a - i * a)),
+                    i,
+                    (s /= 360) + 1 / 3
+                )),
+                    (n = e(a, i, s)),
+                    (o = e(a, i, s - 1 / 3))),
+            {
+                r: (t = Math.round(255 * t)),
+                g: (n = Math.round(255 * n)),
+                b: (o = Math.round(255 * o)),
+                o: h,
+                complete: r
+                    ? "rgba(" + [t, n, o, h].join(",") + ")"
+                    : "rgb(" + [t, n, o].join(",") + ")",
+            }
+        );
+    },
 };
-// 最后将插件对象暴露给全局对象
-// window.colorFormat = colorFormat;
-
 
 // =================================================================
 
 // 初始化参数
 let option = {
-    // parentDOM: document.body,  // 对于vue组件（避免在html中重复添加多个取色器）
+    parentDOM: document.body,  // 对于vue组件（避免在html中重复添加多个取色器）
 
     isShow: false,  // 是否显示取色器
     canMove: true,  // 是否可以拖拽取色器
@@ -1065,7 +1035,7 @@ XLColorPicker.prototype = {
         style.appendChild(document.createTextNode(css));
         document.head.appendChild(style);
 
-        document.body.appendChild(temColorPicker);
+        this.parentDOM.appendChild(temColorPicker);
 
         // 获取到操作的dom
         let dom = {
@@ -1428,8 +1398,7 @@ XLColorPicker.prototype = {
                 this.setLinearGradient();
             } else {
                 console.error("没有选择滑块");
-                this.colorInput.value = value;
-                // return;
+                return;
                 // throw Error("没有选择滑块");
             }
         }
@@ -1445,6 +1414,8 @@ XLColorPicker.prototype = {
      * @param {*} param0 h = 0, s, l, a = 1
      */
     updateCurrentColor({ h = 0, s, l, a = 1 }) {
+        console.log("当前的：", h, s, l, a);
+
         // 当前颜色转换成hsla格式
         let hsla = colorFormat({ color: this.currentColor, format: 'hsla' }).complete;
 
@@ -1455,7 +1426,12 @@ XLColorPicker.prototype = {
         lightness = l === undefined ? lightness : l;
         opacity = a === 1 ? (opacity === undefined ? a : opacity) : a;
 
+        console.log("更新后的：", hue, saturation, lightness, opacity);
+
+
         let color = "hsla(" + hue + "," + saturation + "%," + lightness + "%," + opacity + ")";
+
+        console.log("转换后的：", color);
 
         // 转换为hex格式
         color = colorFormat({ color, format: 'hex' }).complete;
@@ -1887,6 +1863,6 @@ XLColorPicker.prototype = {
     }
 }
 
-// window.XLColorPicker = XLColorPicker;
+window.XLColorPicker = XLColorPicker;
 
 export default XLColorPicker;
