@@ -1,93 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>颜色选择器</title>
     <style>
-        html {
-            background: linear-gradient(90deg, #fafafa 0%, #00f50c52 54%, #00f50ccf 100%);
-        }
+      html {
+        background: linear-gradient(
+          90deg,
+          #fafafa 0%,
+          #00f50c52 54%,
+          #122713cf 100%
+        );
+      }
 
-        .container {
-            display: grid;
-            grid-template-columns: auto auto;
-            width: 100%;
-            height: 80vh;
-            grid-gap: 20px;
-        }
+      .container {
+        display: grid;
+        grid-template-columns: auto auto;
+        width: 100%;
+        height: 80vh;
+        grid-gap: 40px;
+      }
 
-        .title {
-            font-weight: bold;
-            margin-left: 45%;
-            font-size: 2rem;
-            margin-bottom: 50px;
-        }
+      .title {
+        font-weight: bold;
+        margin-left: 45%;
+        font-size: 2rem;
+        margin-bottom: 50px;
+      }
+
+      .color-picker {
+        position: relative;
+      }
+
+      .pos {
+        position: absolute;
+        top: -30px;
+      }
     </style>
-</head>
+  </head>
 
-<body>
+  <body>
     <div class="title">选择颜色</div>
     <div class="container">
-        <div>
-            <div id="color-picker1"></div>
-        </div>
-        <div>
-            <div id="color-picker2"></div>
-        </div>
-        <div>
-            <div id="color-picker3"></div>
-        </div>
-        <div>
-            <div id="color-picker4"></div>
-        </div>
+      <div class="color-picker">
+        <div id="color-picker1" class="pos"></div>
+      </div>
+      <div class="color-picker">
+        <div id="color-picker2" class="pos"></div>
+      </div>
+      <div class="color-picker">
+        <div id="color-picker3" class="pos"></div>
+      </div>
+      <div class="color-picker">
+        <div id="color-picker4" class="pos"></div>
+      </div>
     </div>
     <script type="module">
-        import XLColorPicker from './xl-color-picker-m.js'
-        let bg = document.querySelectorAll('.container > div');
+      import XLColorPicker from './xl-color-picker.js'
+      let bg = document.querySelectorAll('.container > div')
 
-        let a = new XLColorPicker({
-            id: 'color-picker1',
-            eleColor: "#3367d1",
-            canMove: true,
-            getCurrentColor: function (color) {
-                bg[0].style.background = color;
-                console.log(color);
-            },
-        })
+      let a = new XLColorPicker({
+        id: 'color-picker1',
+        eleColor: '#3367d1',
+        canMove: true,
+        getCurrentColor: function (color) {
+          bg[0].style.background = color
+          console.log(color)
+        },
+      })
 
-        let b = new XLColorPicker({
-            id: 'color-picker2',
-            eleColor: "#010101",
-            canMove: true,
-            getCurrentColor: function (color) {
-                bg[1].style.background = color;
-                console.log(color);
-            },
-        })
+      let b = new XLColorPicker({
+        id: 'color-picker2',
+        eleColor: 'linear-gradient(0deg, #71d25b 0%, #ffffff 100%)',
+        canMove: true,
+        getCurrentColor: function (color) {
+          bg[1].style.background = color
+          console.log(color)
+        },
+      })
 
-        let c = new XLColorPicker({
-            id: 'color-picker3',
-            eleColor: "#7b99fd",
-            canMove: true,
-            getCurrentColor: function (color) {
-                bg[2].style.background = color;
-                console.log(color);
+      let c = new XLColorPicker({
+        id: 'color-picker3',
+        eleColor: '#7b99fd',
+        canMove: true,
+        getCurrentColor: function (color) {
+          bg[2].style.background = color
+          console.log(color)
+        },
+      })
 
-            },
-        })
-
-        let d = new XLColorPicker({
-            id: 'color-picker4',
-            eleColor: "#f3f5fa",
-            canMove: false,
-            getCurrentColor: function (color) {
-                bg[3].style.background = color;
-                console.log(color);
-            },
-        })
+      let d = new XLColorPicker({
+        id: 'color-picker4',
+        eleColor:
+          'linear-gradient(90deg, #fcfcfc 0%, #4a8ec9 57%, #0900f5 100%)',
+        canMove: false,
+        getCurrentColor: function (color) {
+          bg[3].style.background = color
+          console.log(color)
+        },
+      })
     </script>
-</body>
-
+  </body>
 </html>

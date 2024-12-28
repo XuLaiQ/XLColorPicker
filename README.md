@@ -2,6 +2,15 @@
 自定义取色器的布局，实现取色器
 
 
+
+项目文件说明：
+
+- xl-color-picker.js   index.html   js原生实现的例子
+- colorPicker文件夹中的是vue版本的取色器
+
+
+
+
 ## 实现过程&步骤
 ### 1.自定义布局
 使用html和css实现
@@ -454,7 +463,42 @@ document.addEventListener('DOMContentLoaded', function () {
 ![alt texe](img/取色器.png)
 
 
+
+
+
+# 版本功能说明
+
+#### 版本v1.0
+
+实现取色器的基本功能：js+html+css 原生实现
+
+- 原色的选取
+- 渐变色的选取
+- 渐变添加和减少渐变颜色
+- 渐变方向选择功能
+- 吸管取色
+- 透明度和色相的控制
+- 颜色值输出，输入功能（右击底部的input框可以快速复制）
+- 历史颜色的展示
+
+
+
+#### 版本2.0
+
+新增vue版本的取色器功能
+
+- 在vue组件中直接将文件夹colorPicker复制到vue项目中，index.vue中展示简单的示例
+- 实现js+vue选项式的组件封装
+- 实现ts+vue组合式的组件封装
+- 如果是纯色会根据绑定的颜色值改变初始化的取色器的画板背景色，渐变条的颜色是默认的
+- 如果是渐变色会根据绑定的值展示出对应的渐变色控制条，画板的背景色是默认的
+
+
+
+
+
 # 注释
+
 参考博客及其他教程地址：
 - CSS HSL 颜色: https://www.w3ccoo.com/html/html_colors_hsl.asp#:~:text=HSL%20%E9%A2%9C%E8%89%B2%E5%80%BC.%20%E5%9C%A8
 
