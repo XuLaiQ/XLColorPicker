@@ -143,27 +143,38 @@ interface ColorResult {
     complete: string;
 }
 
+interface ColorFormatOptions {
+    color: string;
+    format: string;
+}
+
+
 class ColorFormat {
     private static defineColor = [
-        { name: 'red', hex: '#f00' },
-        { name: 'orange', hex: '#ffa500' },
-        { name: 'yellow', hex: '#ff0' },
-        { name: 'green', hex: '#0f0' },
-        { name: 'cyan', hex: '#0ff' },
-        { name: 'blue', hex: '#00f' },
-        { name: 'violet', hex: '#ee82ee' },
-        { name: 'black', hex: '#000' },
-        { name: 'white', hex: '#fff' },
+        {name: 'red', hex: '#f00'},
+        {name: 'orange', hex: '#ffa500'},
+        {name: 'yellow', hex: '#ff0'},
+        {name: 'green', hex: '#0f0'},
+        {name: 'cyan', hex: '#0ff'},
+        {name: 'blue', hex: '#00f'},
+        {name: 'violet', hex: '#ee82ee'},
+        {name: 'black', hex: '#000'},
+        {name: 'white', hex: '#fff'},
     ];
 
-    constructor(private options: { color: string; format: string }) {}
+    constructor(private options: { color: string; format: string }) {
+    }
 
-    static colorFormat(options: { color: string; format: string }): ColorResult | false {
-        return new ColorFormat(options).convert();
+    static colorFormat(options: { color: string; format: string }): ColorResult {
+        const result = new ColorFormat(options).convert();
+        if (result === false) {
+            throw new Error("Invalid color or format");
+        }
+        return result;  // Ensure it always returns a ColorResult object
     }
 
     private convert(): ColorResult | false {
-        let result: ColorResult | false = false; // Initialize with a fallback value
+        let result: ColorResult | false = false;
 
         const color = this.options.color.replace(/\s/g, '').toLowerCase();
         const format = this.options.format.replace(/\s/g, '').toLowerCase();
@@ -174,13 +185,13 @@ class ColorFormat {
         // Hex input
         if (color.startsWith('#')) {
             if (format === 'hex') {
-                result = this.hexToRgb(color);
+                result = this.hexToRgb(color, isRGBA ? 1 : 0);
                 return this.rgbToHex(result);
             } else if (format.includes('rgb')) {
                 result = this.hexToRgb(color, isRGBA ? 1 : 0);
                 return result;
             } else if (format.includes('hsl')) {
-                result = this.hexToRgb(color);
+                result = this.hexToRgb(color, isRGBA ? 1 : 0);
                 result = this.rgbToHsl(result, isHSLA ? 1 : 0);
                 return result;
             }
@@ -193,6 +204,8 @@ class ColorFormat {
                 return this.rgbToHex(result);
             } else if (format.includes('hsl')) {
                 return this.rgbToHsl(result, isHSLA ? 1 : 0);
+            } else if (format.includes('rgb')) {
+                return result;
             }
         }
 
@@ -204,6 +217,8 @@ class ColorFormat {
                 return this.rgbToHex(result);
             } else if (format.includes('hsl')) {
                 return this.rgbToHsl(result, isHSLA ? 1 : 0);
+            } else if (format.includes('rgb')) {
+                return result;
             }
         }
 
@@ -217,22 +232,20 @@ class ColorFormat {
                 }
             }
             if (!hexColor) return false;
-            result = this.hexToRgb(hexColor);
+            result = this.hexToRgb(hexColor, isRGBA ? 1 : 0);
             return format === 'hex' ? this.rgbToHex(result) : this.rgbToHsl(result, isHSLA ? 1 : 0);
         }
 
-        // Return result if it's been assigned a value, otherwise false
-        return result;
+        return false; // Ensure always returning a value
     }
 
-
-    // Parse the RGB string and return an object
     private getRgb(rgbString: string, withAlpha: number): ColorResult {
         const rgba = rgbString.replace(/[^\d,]/g, '').split(',').map(Number);
         const r = rgba[0];
         const g = rgba[1];
         const b = rgba[2];
-        const o = withAlpha ? (rgba[3] || 1) : 1;
+        const o = rgba[3] !== null || undefined ? rgba[3] : 1;
+        // const o = withAlpha ? (rgba[3] || 1) : 1;
 
         return {
             r,
@@ -245,50 +258,44 @@ class ColorFormat {
         };
     }
 
-    // Parse the HSL string and return an object
     private getHsl(hslString: string, withAlpha: number): ColorResult {
-        const hsla = hslString.replace(/[^\d,]/g, '').split(',').map(Number);
-        const h = hsla[0];
-        const s = hsla[1] / 100;
-        const l = hsla[2] / 100;
-        const o = withAlpha ? (hsla[3] || 1) : 1;
+        // 匹配任何不是数字、小数点或逗号的字符，并且会在整个输入字符串中查找所有这样的字符。在代码中，这个正则表达式被用来替换掉这些字符，以便只留下数字、小数点和逗号
+        const hsla = hslString.replace(/[^\d.,]/g, '').split(',').map(Number);
+        const h = hsla[0]; // Hue
+        const s = hsla[1]; // Saturation
+        const l = hsla[2]; // Lightness
+        const o = hsla[3] !== null || undefined ? hsla[3] : 1;
+        // const o = withAlpha ? (hsla[3] || 1) : 1;
 
         return {
             r: h,
-            g: s * 100,
-            b: l * 100,
+            g: s,
+            b: l,
             o,
             complete: withAlpha
-                ? `hsla(${h},${s * 100}%,${l * 100}%,${o})`
-                : `hsl(${h},${s * 100}%,${l * 100}%)`,
+                ? `hsla(${h},${s}%,${l}%,${o})`
+                : `hsl(${h},${s}%,${l}%)`,
         };
     }
 
-    // Convert hex color to RGB
     private hexToRgb(hex: string, withAlpha: number = 0): ColorResult {
         hex = hex.replace('#', '');
         let r = 0, g = 0, b = 0, a = 1; // Default values
 
-        if (hex.length === 3) {
+        if (hex.length === 3 || hex.length === 4) {
             r = parseInt(hex[0] + hex[0], 16);
             g = parseInt(hex[1] + hex[1], 16);
             b = parseInt(hex[2] + hex[2], 16);
-            a = 1;
-        } else if (hex.length === 4) {
-            r = parseInt(hex[0] + hex[0], 16);
-            g = parseInt(hex[1] + hex[1], 16);
-            b = parseInt(hex[2] + hex[2], 16);
-            a = Math.round((parseInt(hex[3] + hex[3], 16) / 255) * 100) / 100;
-        } else if (hex.length === 6) {
+            if (hex.length === 4) {
+                a = parseInt(hex[3] + hex[3], 16) / 255;
+            }
+        } else if (hex.length === 6 || hex.length === 8) {
             r = parseInt(hex.slice(0, 2), 16);
             g = parseInt(hex.slice(2, 4), 16);
             b = parseInt(hex.slice(4, 6), 16);
-            a = 1;
-        } else if (hex.length === 8) {
-            r = parseInt(hex.slice(0, 2), 16);
-            g = parseInt(hex.slice(2, 4), 16);
-            b = parseInt(hex.slice(4, 6), 16);
-            a = Math.round((parseInt(hex.slice(6, 8), 16) / 255) * 100) / 100;
+            if (hex.length === 8) {
+                a = parseInt(hex.slice(6, 8), 16) / 255;
+            }
         }
 
         return {
@@ -302,13 +309,13 @@ class ColorFormat {
         };
     }
 
-    // Convert RGB to HEX
     private rgbToHex(color: ColorResult): ColorResult {
         const r = Math.round(color.r).toString(16).padStart(2, '0');
         const g = Math.round(color.g).toString(16).padStart(2, '0');
         const b = Math.round(color.b).toString(16).padStart(2, '0');
         const a = Math.round(255 * color.o).toString(16).padStart(2, '0');
-        const hex = `#${r}${g}${b}${a}`;
+
+        const hex = `#${r}${g}${b}${a}`.slice(0, 9); // Ensure the alpha channel is not included if it's 1 (fully opaque)
 
         return {
             r: parseInt(r, 16),
@@ -319,13 +326,11 @@ class ColorFormat {
         };
     }
 
-    // Convert RGB to HSL
     private rgbToHsl(color: ColorResult, withAlpha: number): ColorResult {
         let r = color.r / 255;
         let g = color.g / 255;
         let b = color.b / 255;
         const a = color.o;
-
         const max = Math.max(r, g, b);
         const min = Math.min(r, g, b);
         let h = 0;
@@ -336,13 +341,13 @@ class ColorFormat {
             const delta = max - min;
             s = l > 0.5 ? delta / (2 - max - min) : delta / (max + min);
             if (max === r) {
-                h = (g - b) / delta + (g < b ? 6 : 0);
+                h = ((g - b) / delta + (g < b ? 6 : 0));
             } else if (max === g) {
-                h = (b - r) / delta + 2;
+                h = ((b - r) / delta + 2);
             } else {
-                h = (r - g) / delta + 4;
+                h = ((r - g) / delta + 4);
             }
-            h *= 60;
+            h *= 60; // Convert to degrees
         }
 
         return {
@@ -356,42 +361,44 @@ class ColorFormat {
         };
     }
 
-    // Convert HSL to RGB
     private hslToRgb(color: ColorResult, withAlpha: number): ColorResult {
-        let r = color.r / 255;
-        let g = color.g / 255;
-        let b = color.b / 255;
+        let h = color.r / 360; // Normalize hue to [0, 1]
+        let s = color.g / 100; // Saturation
+        let l = color.b / 100; // Lightness
         const a = color.o;
 
-        const max = Math.max(r, g, b);
-        const min = Math.min(r, g, b);
-        let h = 0;
-        let s = 0;
-        let l = (max + min) / 2;
+        let r, g, b;
 
-        if (max !== min) {
-            const delta = max - min;
-            s = l > 0.5 ? delta / (2 - max - min) : delta / (max + min);
-            if (max === r) {
-                h = (g - b) / delta + (g < b ? 6 : 0);
-            } else if (max === g) {
-                h = (b - r) / delta + 2;
-            } else {
-                h = (r - g) / delta + 4;
-            }
-            h *= 60;
+        if (s === 0) {
+            r = g = b = l; // Achromatic (grey)
+        } else {
+            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            const p = 2 * l - q;
+            r = this.hueToRgb(p, q, h + 1 / 3);
+            g = this.hueToRgb(p, q, h);
+            b = this.hueToRgb(p, q, h - 1 / 3);
         }
 
         return {
-            r: h,
-            g: s * 100,
-            b: l * 100,
+            r: Math.round(r * 255),
+            g: Math.round(g * 255),
+            b: Math.round(b * 255),
             o: a,
             complete: withAlpha
-                ? `hsla(${Math.round(h)},${Math.round(s * 100)}%,${Math.round(l * 100)}%,${a})`
-                : `hsl(${Math.round(h)},${Math.round(s * 100)}%,${Math.round(l * 100)}%)`,
+                ? `rgba(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)},${a})`
+                : `rgb(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)})`,
         };
     }
+
+    private hueToRgb(p: number, q: number, t: number): number {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1 / 6) return p + (q - p) * 6 * t;
+        if (t < 1 / 2) return q;
+        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+        return p;
+    }
+
 }
 
 
@@ -412,34 +419,36 @@ interface EyeDropper {
 // ======================================取色器主体代码
 // 颜色选择器配置
 interface ColorPickerOption {
-    isShow: boolean;
-    canMove: boolean;
-    isDragging: boolean;
-    startX: number;
-    startY: number;
-    id: string;
-    ele: HTMLElement | null;
-    eleWidth: number;
-    eleHeight: number;
-    eleColor: string;
-    pickerWidth: number;
-    pickerHeight: number;
-    currentColorModule: HTMLElement | null;
-    currentColor: string;
-    bottomHistory: number;
-    absorbHistory: number;
-    sliderBarWidth: number;
-    gradientDIVList: GradientSlider[];
-    currentSelectedSlider: HTMLElement | null;
-    currentSelectedSliderObj: GradientSlider | null;
-    currentDegree: number;
-    colorPanelCursorLabel: boolean;
-    colorPickerBottomSaturationLabel: boolean;
-    colorPickerBottomAlphaLabel: boolean;
-    originalColor: string;
-    leftSliderColor: string;
-    rightSliderColor: string;
-    getCurrentColor: (color: string) => void;
+    isShow?: boolean;  // 是否显示取色器
+    canMove?: boolean; // 是否可以拖拽取色器
+    isDragging?: boolean;  // 是否正在拖拽
+    startX?: number;  // 鼠标按下时的X坐标
+    startY?: number;  // 鼠标按下时的Y坐标
+    id?: string;  // 传入的DOM  id
+    ele?: HTMLElement | null;  // id对应的DOM对象
+    eleWidth?: number;  // 对应DOM的宽度
+    eleHeight?: number;  // 对应DOM的高度
+    eleColor?: string;  // 对应DOM的颜色
+    pickerWidth?: number; // 颜色选择器宽度
+    pickerHeight?: number;  // 颜色选择器高度
+    currentColorModule?: HTMLElement | null;  // 当前选择的是原色还是渐变色
+    currentColor?: string;  // 记录当前的颜色
+    bottomHistory?: number;  // 底部历史记录条数
+    absorbHistory?: number;  // 吸管取色历史记录条数
+    sliderBarWidth?: number;  // 渐变条宽度
+    gradientDIVList?: GradientSlider[];  // 渐变条操作数组
+    currentSelectedSlider?: HTMLElement | null;   // 记录当前选中的滑块
+    currentSelectedSliderObj?: GradientSlider | null;   // 记录当前选中的滑块obj
+    currentDegree?: number;  // 渐变方向，默认为从上到下
+    colorPanelCursorLabel?: boolean;  // 色板的游标取色功能
+    colorPickerBottomSaturationLabel?: boolean;  // 色阶柱选择功能
+    colorPickerBottomAlphaLabel?: boolean; // 透明度选择功能
+    originalColor?: string;  // 原始颜色
+    leftSliderColor?: string;  // 渐变条左侧滑块颜色
+    rightSliderColor?: string;  // 渐变条右侧滑块颜色
+    getCurrentColor?: (color: string) => void; // 获取到输入框的值
+    hue?: number; // 色相
+    format?: string; // 颜色格式
 }
 
 // 渐变滑块
@@ -453,12 +462,18 @@ type GradientSlider = {
 // 渐变转换颜色和位置数组
 interface GradientFromStrType {
     type: string;
-    angle: number;
-    colors: ({
-        color: string;
-        per: number;
-    } | null)[];
+    angle: string | number;
+    colors: ({ color: string; per: number; } | null)[];
 }
+
+// 转换颜色值为数组
+interface HSLAValues {
+    hue: number;
+    saturation: number;
+    lightness: number;
+    opacity: number;
+}
+
 
 // 操作的DOM
 interface OptionDom {
@@ -486,9 +501,9 @@ interface OptionDom {
 
 class XLColorPicker {
     private readonly option: ColorPickerOption; // 用于存储配置选项
-    private gradientDIVList: GradientSlider[] = []; // 用于存储渐变条信息
 
     // 下面声明类的实例属性，确保在类型上与 ColorPickerOption 匹配
+    private gradientDIVList: GradientSlider[] = []; // 用于存储渐变条信息
     private isShow: boolean = false;
     private canMove: boolean = true;
     private isDragging: boolean = false;
@@ -498,7 +513,7 @@ class XLColorPicker {
     private ele: HTMLElement | null = null;
     private eleWidth: number = 20;
     private eleHeight: number = 20;
-    private eleColor: string = '#46be69';
+    private eleColor: string = '';
     private pickerWidth: number = 280;
     private pickerHeight: number = 450;
     private currentColorModule: HTMLElement | null = null;
@@ -515,8 +530,10 @@ class XLColorPicker {
     private originalColor: string = '#ff0000';
     private leftSliderColor: string = '#ff0000';
     private rightSliderColor: string = '#0900f5';
+    // 记录当前颜色的H值
+    private hue: number = 0;
+    private format: string = '';
     getCurrentColor: (color: string) => void = (color: string) => {
-        console.log("当前颜色:", color);
     };
 
     // dom元素
@@ -543,8 +560,7 @@ class XLColorPicker {
 
     // 历史队列
     private historyColorQueue: ColorCircularQueue = new ColorCircularQueue(9);
-    private absorbHistoryColorQueue = new ColorCircularQueue(9);
-
+    private absorbHistoryColorQueue = new ColorCircularQueue(2);
 
     constructor(options: ColorPickerOption) {
         // 合并默认选项和用户提供的选项
@@ -561,6 +577,7 @@ class XLColorPicker {
         this.init();
     }
 
+    /** 默认选项 */
     private defaultOptions(): ColorPickerOption {
         return {
             isShow: false,
@@ -572,7 +589,7 @@ class XLColorPicker {
             ele: null,
             eleWidth: 20,
             eleHeight: 20,
-            eleColor: '#46be69',
+            eleColor: '',
             pickerWidth: 280,
             pickerHeight: 450,
             currentColorModule: null,
@@ -590,9 +607,10 @@ class XLColorPicker {
             originalColor: '#ff0000',
             leftSliderColor: '#ff0000',
             rightSliderColor: '#0900f5',
+            hue: 0,
+            format: '',
             getCurrentColor: (color: string) => {
-                console.log("当前颜色:", color);
-            }
+            },
         };
     }
 
@@ -650,7 +668,7 @@ class XLColorPicker {
     }
 
     // 设置指定页面的操作块
-    initModule(): void {
+    initModule() {
         let that = this
 
         // 获取颜色选择器对应的DOM对象
@@ -668,7 +686,7 @@ class XLColorPicker {
 
         // 设置颜色板
         if (!this.eleColor.includes('linear-gradient')) {
-            this.setColorBoard(this.eleColor)
+            this.setColorBoard()
 
             this.addGradientSlider(0, this.leftSliderColor)
             this.addGradientSlider(this.sliderBarWidth, this.rightSliderColor)
@@ -684,7 +702,7 @@ class XLColorPicker {
                         item!.color
                     )
                 })
-                this.rotateGradient(gradientList.angle)
+                this.rotateGradient(gradientList.angle as number)
             }
         }
         // 添加点击事件
@@ -1300,10 +1318,10 @@ class XLColorPicker {
             ),
         }
 
-        // 将所有dom挂载到this上
-        Object.keys(dom).forEach((key: string) => {
-            return (this[key] = dom[key]);
-        })
+        Object.keys(dom).forEach((key) => {
+            // @ts-ignore: 访问属性时可能会有类型检查错误
+            this[key] = dom[key];
+        });
     }
 
     // 初始化事件
@@ -1339,7 +1357,6 @@ class XLColorPicker {
     hide() {
         this.controllerShow!.style.display = 'none'
     }
-
 
     // 绑定事件
     bindEvent() {
@@ -1485,21 +1502,10 @@ class XLColorPicker {
                 // throw Error("输入的颜色格式不正确");
             }
 
-            // 颜色格式转换
-            let hexColor = ColorFormat.colorFormat({color, format: 'hex'}).complete
-
-            if (hexColor === null || hexColor === undefined) {
-                that.setColorInputValue('')
-                // 提示错误信息
-                console.log('输入的颜色格式不正确')
-                return
-                // throw Error("输入的颜色格式不正确");
-            }
-
             // 设置input的值
-            that.setColorInputValue(hexColor)
+            that.setColorInputValue(color)
 
-            that.setColorBoard(color)
+            that.setColorBoard()
         })
 
         // 监听右击事件
@@ -1515,6 +1521,10 @@ class XLColorPicker {
         })
     }
 
+    /**
+     * 检查颜色格式是否正确
+     * @param colorStr
+     */
     validateAndCompleteRGBA(colorStr: string) {
         // 正则表达式匹配rgba格式
         const rgbaRegex =
@@ -1554,7 +1564,7 @@ class XLColorPicker {
         }
     }
 
-    // 通过hue获取到画板的背景
+    /** 通过hue获取到画板的背景 */
     hslToBackground(h: number) {
         // 将Hue值从0-360转换为0-1的范围
         let hue = h / 360
@@ -1596,20 +1606,21 @@ class XLColorPicker {
         return `rgb(${r}, ${g}, ${b})`
     }
 
-    // 设置颜色板
-    setColorBoard(color: string) {
+    /** 设置颜色板 */
+    setColorBoard() {
         try {
             // rgba格式的校验
-            if (
-                this.eleColor.indexOf('rgba') !== -1 ||
-                this.eleColor.indexOf('rgb') !== -1
-            ) {
+            if (this.eleColor.indexOf('rgba') !== -1 || this.eleColor.indexOf('rgb') !== -1) {
                 this.eleColor = this.validateAndCompleteRGBA(this.eleColor)
             }
-            let hsla = ColorFormat.colorFormat({color, format: 'hsla'}).complete
+            let hslaValues = this.extractHSLAValues();
+            if (hslaValues === undefined) {
+                console.log("颜色值转换错误");
+                return;
+            }
 
-            // 获取h,s,l,a
-            let {hue, saturation, lightness, opacity} = this.extractHSLAValues(hsla)
+            let {hue, saturation, lightness, opacity} = hslaValues;
+
 
             // 转换成百分比
             hue = ((360 - hue) / 360) * 100
@@ -1639,6 +1650,9 @@ class XLColorPicker {
             hue = 360 - (hue / 100) * 360
             // 改变色板颜色
             this.colorPanel!.style.backgroundColor = this.hslToBackground(hue)
+            // 保存当前颜色的H值
+            this.hue = hue
+
             // 保存当前颜色
             // this.currentColor = hsla;
         } catch (e) {
@@ -1646,11 +1660,19 @@ class XLColorPicker {
         }
     }
 
+    /**
+     * 转换渐变色为数组
+     * @param args
+     */
     replace(...args: any[]) {
         const string = `${args[0]}`
         return args.length < 3 ? string : string.replace(args[1], args[2])
     }
 
+    /**
+     * 渐变色格式转换成数组
+     * @param gradientStr
+     */
     gradientFromStr(gradientStr: string) {
         let type = ''
         gradientStr = gradientStr.toLowerCase()
@@ -1696,12 +1718,10 @@ class XLColorPicker {
             angle: type == 'linear-gradient' ? parseFloat(arry[0]).toFixed(0) : 0,
             colors,
         }
-        // console.log("====", gradientStr, arry, gradient);
-        // Object.assign(this.gradient, gradient);
         return gradient
     }
 
-    // 取色器的位置不能超过浏览器窗口
+    /** 取色器的位置不能超过浏览器窗口 */
     checkPosition(x: number, y: number) {
         // 获取屏幕的宽度和高度
         let screenWidth = window.innerWidth
@@ -1722,23 +1742,53 @@ class XLColorPicker {
 
     /**
      * 提取出hsla格式的字符串中的值
-     * @param {*} str hsla格式的颜色值
      * @returns hue (色调),saturation (饱和度),lightness (亮度),opacity (透明度)
      */
-    extractHSLAValues(str: string) {
-        const regex = /hsla\((\d+),\s*(\d+)%,\s*(\d+)%,\s*(\d+(?:\.\d+)?)\)/
-        const match = str.match(regex)
-        if (match) {
-            return {
-                hue: match[1],
-                saturation: match[2],
-                lightness: match[3],
-                opacity: match[4],
+    extractHSLAValues(): HSLAValues | undefined {
+        try {
+            // 获取h,s,l,a 当前颜色转换成hsla格式
+            let hsla = ColorFormat.colorFormat({
+                color: this.currentColor,
+                format: 'hsla',
+            }).complete
+
+            const regex = /hsla\((\d+),\s*(\d+)%,\s*(\d+)%,\s*(\d+(?:\.\d+)?)\)/
+            const match = hsla.match(regex)
+            if (match) {
+                return {
+                    hue: +match[1],
+                    saturation: +match[2],
+                    lightness: +match[3],
+                    opacity: +match[4],
+                }
+            } else {
+                console.error('Invalid hsla format')
+                return undefined; // 返回 undefined 表示解析失败
             }
+        } catch (e) {
+            console.error('Error in extracting hsla values:', e)
+            return undefined; // 返回 undefined 表示解析失败
+        }
+    }
+
+    /**
+     * 计算saturation和lightness
+     * @param {*} w 宽度
+     * @param {*} h 高度
+     * @param {*} left 左边距
+     * @param {*} top 顶边距
+     * @returns saturation, lightness
+     */
+    calculateSL(w: number, h: number, left: number, top: number) {
+        let s, l
+        if (top === 0) {
+            return {s: 0, l: 0}
         } else {
-            console.log('Invalid hsla format')
-            return
-            // throw Error('Invalid hsla format');
+            s = Math.round((left / w) * 100)
+
+            l = Math.round((top / h) * 100 + ((w - left) / w) * 100) / 2
+
+            return {s, l}
         }
     }
 
@@ -1776,27 +1826,32 @@ class XLColorPicker {
 
     /**
      * 设置颜色输入框的值
-     * @param {*} value 颜色值
+     * @param {*} color 颜色值
+     * @param format
      */
-    setColorInputValue(value: string) {
+    setColorInputValue(color: string, format: string = this.format) {
         try {
-            this.colorInput!.value = value.toLowerCase()
+            if (color.includes('linear-gradient')) {
+                this.colorInput!.value = color.toLowerCase()
+            } else {
+                this.colorInput!.value = ColorFormat.colorFormat({color, format: format}).complete
+            }
             // 颜色块的背景颜色
             if (this.currentColorModule === this.showOriginal) {
-                if (value.includes('linear-gradient')) {
-                    this.currentColorModule.style.background = '#ffffff'
+                if (color.includes('linear-gradient')) {
+                    this.currentColorModule.style.background = '#ff0000'
                 } else {
-                    this.currentColorModule.style.background = value
+                    this.currentColorModule.style.background = ColorFormat.colorFormat({color, format: format}).complete
                 }
             } else if (this.currentColorModule === this.showLinear) {
                 this.colorInput!.style.fontSize = '12px'
 
                 // 线性渐变
                 if (this.currentSelectedSliderObj) {
-                    this.currentSelectedSliderObj.color = value
+                    this.currentSelectedSliderObj.color = ColorFormat.colorFormat({color, format: format}).complete
                     this.setLinearGradient()
                 } else {
-                    console.log('没有选择滑块')
+                    console.error('没有选择滑块')
                     // this.colorInput.value = value;
                     // return;
                     // throw Error("没有选择滑块");
@@ -1805,11 +1860,11 @@ class XLColorPicker {
             this.getCurrentColor(this.colorInput!.value)
 
             this.ele!.style.background = this.colorInput!.value
-            if (value.includes('linear-gradient')) {
-                this.currentColorModule!.style.background = '#ffffff'
+            if (color.includes('linear-gradient')) {
+                this.currentColorModule!.style.background = '#ff0000'
             } else {
                 // 更新当前颜色
-                this.currentColor = value
+                this.currentColor = ColorFormat.colorFormat({color, format: 'hex'}).complete
             }
         } catch {
             console.log('设置颜色输入框的值失败')
@@ -1820,55 +1875,37 @@ class XLColorPicker {
      * 更新curruntColor当前颜色
      * @param {*} param0 h = 0, s, l, a = 1
      */
-    updateCurrentColor({h = 0, s, l, a = 1}: {h?: number, s?: number, l?: number, a?: number}) {
+    updateCurrentColor({h = this.hue, s, l, a = 1}: { h?: number, s?: number, l?: number, a?: number }) {
         // rgba格式的校验
         if (this.eleColor.indexOf('rgba') !== -1) {
             this.eleColor = this.validateAndCompleteRGBA(this.eleColor)
         }
-        // 当前颜色转换成hsla格式
-        let hsla = ColorFormat.colorFormat({
-            color: this.currentColor,
-            format: 'hsla',
-        }).complete
+        let hslaValues = this.extractHSLAValues();
+        if (hslaValues === undefined) {
+            console.log("颜色值转换错误");
+            return;
+        }
 
-        let {hue, saturation, lightness, opacity} = this.extractHSLAValues(hsla)
+        let {hue, saturation, lightness, opacity} = hslaValues;
 
         hue = h === 0 ? (hue === undefined ? h : hue) : h
         saturation = s === undefined ? saturation : s
         lightness = l === undefined ? lightness : l
         opacity = a === 1 ? (opacity === undefined ? a : opacity) : a
-
         let color =
             'hsla(' + hue + ',' + saturation + '%,' + lightness + '%,' + opacity + ')'
 
-        // 转换为hex格式
-        color = ColorFormat.colorFormat({color, format: 'hex'}).complete
         this.setColorInputValue(color)
     }
 
     /**
-     * 计算saturation和lightness
-     * @param {*} w 宽度
-     * @param {*} h 高度
-     * @param {*} left 左边距
-     * @param {*} top 顶边距
-     * @returns saturation, lightness
-     */
-    calculateSL(w: number, h: number, left: number, top: number) {
-        let s, l
-        s = Math.round((left / w) * 100)
-
-        l = Math.round((top / h) * 100 + ((w - left) / w) * 100) / 2
-        return {s, l}
-    }
-
-    /**
      * 更新滑块位置
-     * @param {*} element 滑块元素
+     * @param ele
+     * @param slide
      * @param {*} left 左边距
-     * @param {*} ...arg 高度
+     * @param args
      */
-    updatedSlidePosition(ele: any, slide: any, left: number, ...args: any[]) {
+    updatedSlidePosition(ele: any, slide: any, left: number, ...args: any) {
         try {
             let [top] = args
             // 判断是否是dom节点元素
@@ -1879,41 +1916,31 @@ class XLColorPicker {
             if (this.eleColor.indexOf('rgba') !== -1) {
                 this.eleColor = this.validateAndCompleteRGBA(this.eleColor)
             }
-            // 获取h,s,l,a 当前颜色转换成hsla格式
-            let hsla = ColorFormat.colorFormat({
-                color: this.currentColor,
-                format: 'hsla',
-            }).complete
 
-            let {hue, saturation, lightness, opacity} = this.extractHSLAValues(hsla)
+            let hslaValues = this.extractHSLAValues();
+            if (hslaValues === undefined) {
+                console.log("颜色值转换错误");
+                return;
+            }
 
+            let {hue, saturation, lightness, opacity} = hslaValues;
             // 色阶
             if (slide.isEqualNode(this.colorPickerBottomSaturationSlide)) {
                 hue = Math.round((left / width) * 360)
                 this.updateCurrentColor({h: hue})
 
-                // 更新色板颜色
-                let color = 'hsla(' + hue + ',' + 100 + '%,' + 50 + '%,' + 1 + ')'
+                // 保存当前颜色的H值
+                this.hue = hue
 
-                this.colorPanel!.style.backgroundColor = color
+                // 更新色板颜色
+                this.colorPanel!.style.backgroundColor = 'hsla(' + hue + ',' + 100 + '%,' + 50 + '%,' + 1 + ')'
             }
             // 透明度
             else if (slide.isEqualNode(this.colorPickerBottomAlphaSlide)) {
-                opacity = (left / width).toFixed(2)
+                opacity = +(left / width).toFixed(2)
                 this.updateCurrentColor({a: opacity})
                 // 更新色板颜色
-                let color =
-                    'hsla(' +
-                    hue +
-                    ',' +
-                    saturation +
-                    '%,' +
-                    lightness +
-                    '%,' +
-                    opacity +
-                    ')'
-
-                this.colorPanel!.style.backgroundColor = color
+                this.colorPanel!.style.backgroundColor = 'hsla(' + hue + ',' + saturation + '%,' + lightness + '%,' + opacity + ')'
             }
 
             // 如果有top参数（传入height参数了）  画板
@@ -1933,14 +1960,13 @@ class XLColorPicker {
             if (left <= slide.offsetWidth) {
                 left = slide.offsetWidth / 2
             } else if (left >= width) {
-                left = width - slide.offsetWidth / 2
+                left = width
             }
             // 改变滑块的位置
             slide.style.left = left + 'px'
         } catch (e) {
-            console.log('更新滑块位置失败')
             alert('颜色值错误')
-            console.log(e)
+            console.error(e)
         }
     }
 
@@ -1951,7 +1977,7 @@ class XLColorPicker {
      * @param {*} slide 滑块元素
      * @param {*} availableLabel 是否可用
      */
-    mousemove(e: any, ele: any, slide: any, availableLabel: boolean) {
+    mousemove(e: any, ele?: any, slide?: any, availableLabel?: boolean) {
         let that = this
         if (!availableLabel) return
         let width = ele.offsetWidth // 当前元素的宽度
@@ -1967,8 +1993,10 @@ class XLColorPicker {
                 if (top <= 0) {
                     that.updatedSlidePosition(ele, slide, 0, 0)
                 } else if (bottom >= 0) {
+                    // console.log("左下角")
                     that.updatedSlidePosition(ele, slide, 0, height)
                 } else {
+                    // console.log("右上角")
                     that.updatedSlidePosition(ele, slide, 0, top)
                 }
             } else if (right >= 0) {
@@ -2017,6 +2045,10 @@ class XLColorPicker {
      */
     mousedown(ele: any, slide: any, availableLabel: boolean) {
         let that = this
+        let mousemoveHandler = function (e: any) {
+            that.mousemove(e, ele, slide, availableLabel);
+        };
+
         ele.addEventListener('mousedown', function (e: any) {
             availableLabel = true
             // 当前点击位置的相对于条的宽度
@@ -2024,9 +2056,7 @@ class XLColorPicker {
 
             document.addEventListener(
                 'mousemove',
-                function (e) {
-                    that.mousemove(e, ele, slide, availableLabel)
-                },
+                mousemoveHandler,
                 false
             )
 
@@ -2034,7 +2064,7 @@ class XLColorPicker {
             function mouseup(e: any) {
                 availableLabel = false
                 // 解绑mousemove事件
-                document.removeEventListener('mousemove', that.mousemove)
+                document.removeEventListener('mousemove', mousemoveHandler)
                 // 解绑mouseup事件自身
                 document.removeEventListener('mouseup', mouseup)
                 // 添加到历史记录
@@ -2100,7 +2130,7 @@ class XLColorPicker {
         return list
     }
 
-    // 渐变滑块是否被选中状态改变
+    /** 渐变滑块是否被选中状态改变 */
     sliderStateChange(newSlider: any) {
         // 删除所有的被选中状态
         this.gradientDIVList.map((item) => {
@@ -2216,7 +2246,7 @@ class XLColorPicker {
         }
     }
 
-    // 获取线性渐变值
+    /** 获取线性渐变值 */
     setLinearGradient() {
         // 清洗数据
         this.gradientDIVList = this.sortAndDistance(this.gradientDIVList)
@@ -2236,7 +2266,7 @@ class XLColorPicker {
         }
     }
 
-    // 删除选中滑块的函数
+    /** 删除选中滑块的函数 */
     deleteSelectedSlider() {
         if (!this.currentColorModule!.isEqualNode(this.showLinear!)) {
             console.error('当前颜色模式不是线性渐变')
@@ -2265,7 +2295,7 @@ class XLColorPicker {
         }
     }
 
-    // 选择渐变方向
+    /** 选择渐变方向 */
     rotateGradient(deg: number = 90) {
         if (
             !this.currentColorModule!.isEqualNode(this.showLinear!) &&
@@ -2327,13 +2357,13 @@ class XLColorPicker {
         )
     }
 
-    // 销毁
+    /** 销毁 */
     destroy() {
         this.controllerShow!.remove()
     }
 }
 
-export  {
+export {
     XLColorPicker,
     ColorFormat
 }

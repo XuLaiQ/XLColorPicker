@@ -411,6 +411,7 @@ let option = {
   originalColor: '#ff0000', // 原始颜色
   leftSliderColor: '#ff0000', // 渐变条左侧滑块颜色
   rightSliderColor: '#0900f5', // 渐变条右侧滑块颜色
+  hue: 0, // 记录色相
 
   // 获取到输入框的值
   getCurrentColor: function (color) {},
@@ -1473,6 +1474,9 @@ XLColorPicker.prototype = {
       hue = 360 - (hue / 100) * 360
       // 改变色板颜色
       this.colorPanel.style.backgroundColor = this.hslToBackground(hue)
+
+      this.hue = hue
+
       // 保存当前颜色
       // this.currentColor = hsla;
     } catch (e) {
@@ -1622,7 +1626,7 @@ XLColorPicker.prototype = {
       // 颜色块的背景颜色
       if (this.currentColorModule === this.showOriginal) {
         if (value.includes('linear-gradient')) {
-          this.currentColorModule.style.background = '#ffffff'
+          this.currentColorModule.style.background = '#ff0000'
         } else {
           this.currentColorModule.style.background = value
         }
@@ -1644,7 +1648,7 @@ XLColorPicker.prototype = {
 
       this.ele.style.background = this.colorInput.value
       if (value.includes('linear-gradient')) {
-        this.currentColorModule.style.background = '#ffffff'
+        this.currentColorModule.style.background = '#ff0000'
       } else {
         // 更新当前颜色
         this.currentColor = value
@@ -1658,7 +1662,7 @@ XLColorPicker.prototype = {
    * 更新curruntColor当前颜色
    * @param {*} param0 h = 0, s, l, a = 1
    */
-  updateCurrentColor({ h = 0, s, l, a = 1 }) {
+  updateCurrentColor({ h = this.hue, s, l, a = 1 }) {
     // rgba格式的校验
     if (this.eleColor.indexOf('rgba') !== -1) {
       this.eleColor = this.validateAndCompleteRGBA(this.eleColor)
@@ -1694,10 +1698,15 @@ XLColorPicker.prototype = {
    */
   calculateSL(w, h, left, top) {
     let s, l
-    s = Math.round((left / w) * 100)
+    if (top === 0) {
+      return {s: 0, l: 0}
+    } else {
+      s = Math.round((left / w) * 100)
 
-    l = Math.round((top / h) * 100 + ((w - left) / w) * 100) / 2
-    return { s, l }
+      l = Math.round((top / h) * 100 + ((w - left) / w) * 100) / 2
+
+      return {s, l}
+    }
   },
 
   /**
@@ -1729,11 +1738,10 @@ XLColorPicker.prototype = {
       if (slide.isEqualNode(this.colorPickerBottomSaturationSlide)) {
         hue = Math.round((left / width) * 360)
         this.updateCurrentColor({ h: hue })
-
+        // 保存当前颜色的H值
+        this.hue = hue
         // 更新色板颜色
-        let color = 'hsla(' + hue + ',' + 100 + '%,' + 50 + '%,' + 1 + ')'
-
-        this.colorPanel.style.backgroundColor = color
+        this.colorPanel.style.backgroundColor = 'hsla(' + hue + ',' + 100 + '%,' + 50 + '%,' + 1 + ')'
       }
       // 透明度
       else if (slide.isEqualNode(this.colorPickerBottomAlphaSlide)) {

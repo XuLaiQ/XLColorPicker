@@ -4,7 +4,7 @@
 
 <script setup lang="ts">
 import {onMounted, onUnmounted, ref} from "vue";
-import { ColorFormat, XLColorPicker } from './xl-color-picker.ts';
+import { XLColorPicker } from './xl-color-picker.ts';
 
 let opt = defineProps({
   "modelValue": {
@@ -22,6 +22,10 @@ let opt = defineProps({
   "height": {
     type: Number,
     default: 20
+  },
+  "format": {
+    type: String,
+    default: ""
   }
 })
 
@@ -49,12 +53,12 @@ function getRandomId(len: number = 6) {
   return pwd;
 }
 
-function getCurrentColor(color: String) {
+function getCurrentColor(color: string) {
   emit("change", color);
   emit("update:modelValue", color);
 }
 
-function init(color: String) {
+function init(color: string) {
   colorPicker.value = new XLColorPicker({
     eleColor: color || "linear-gradient(0deg, #a850d7 0%, #24afeb 100%)",
     id: getRandomId(), //"#colorPicker",
@@ -62,6 +66,7 @@ function init(color: String) {
     getCurrentColor: getCurrentColor,  // 获取输出框的颜色
     eleWidth: opt.width,  // 宽度
     eleHeight: opt.height, // 高度
+    format: opt.format || "hex", // 颜色格式
   });
 }
 

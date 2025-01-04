@@ -38,8 +38,347 @@ hsla(0, 100%, 50%, 0.5)
 解决方案：\
 暂定！！！
 
+
+
+
+
+### 颜色之间的格式转换
+
+#### HEX和RGB转换原理
+
+##### **HEX简介**
+
+  1. 十六进制颜色；
+  2. 通过16进制0~F这16个字符来表达颜色，`#000`为黑色, `#FFF`为白色；
+  3. HEX简写包括3位和4位（包含透明度，最后一位表示透明度，浏览器是如此，其他暂不确定），全写包括6位和8位（包含透明度，最后两位表示透明度）。
+
+
+
+##### **RGB简介**
+
+    1. 红绿蓝三个颜色通过不同亮度,外加alpha透明度，来组合成为需要的颜色；
+    2. 0为最暗, 255为最亮，`rgb(0,0,0)`为黑色, `rgb(255,255,255)`为白色；
+    3. 透明度表示：`rgba(255,0,0,0.5)`。
+
+
+
+##### **转换原理**
+
+RGB与HEX中每个颜色都是一一对应的关系：
+
+  1. HEX = RGB的数值转为16进制数，如果只有一位，前面补零。
+  2. HEX的透明度 = RGB的透明度 * 255，然后转为16进制数，如果只有一位，前面补零。
+  3. RGB的数值 = 16 * HEX的第一位 + HEX的第二位。
+  4. RGB的透明度 = (16 * HEX的透明度第一位 + HEX的透明度第二位) / 255。
+
+
+
+```javascript
+rgbToHex: function (e) {
+    var r = Number(e.r).toString(16),
+        t = Number(e.g).toString(16),
+        n = Number(e.b).toString(16),
+        o = Math.round(255 * e.o).toString(16)
+    return (
+        r.length < 2 && (r = 0 + r),
+        t.length < 2 && (t = 0 + t),
+        n.length < 2 && (n = 0 + n),
+        o.length < 2 && (o = 0 + o),
+        r[0] == r[1] && t[0] == t[1] && n[0] == n[1] && (o[0], o[1]),
+        {
+            r: r,
+            g: t,
+            b: n,
+            o: o,
+            complete: '#' + (r + t + n + (1 == e.o ? '' : o)),
+        }
+    )
+}
+hexToRgb: function (e, r) {
+    var t,
+        n,
+        o,
+        s,
+        a = (e = e.replace('#', '')).split('')
+    return (
+        3 == e.length
+        ? ((t = parseInt(a[0] + a[0], 16)),
+           (n = parseInt(a[1] + a[1], 16)),
+           (o = parseInt(a[2] + a[2], 16)),
+           (s = 1))
+        : 4 == e.length
+        ? ((t = parseInt(a[0] + a[0], 16)),
+           (n = parseInt(a[1] + a[1], 16)),
+           (o = parseInt(a[2] + a[2], 16)),
+           (s = Math.round((parseInt(a[3] + a[3], 16) / 255) * 100) / 100))
+        : 6 == e.length
+        ? ((t = parseInt(a[0] + a[1], 16)),
+           (n = parseInt(a[2] + a[3], 16)),
+           (o = parseInt(a[4] + a[5], 16)),
+           (s = 1))
+        : 8 == e.length &&
+        ((t = parseInt(a[0] + a[1], 16)),
+         (n = parseInt(a[2] + a[3], 16)),
+         (o = parseInt(a[4] + a[5], 16)),
+         (s = Math.round((parseInt(a[6] + a[7], 16) / 255) * 100) / 100)),
+        {
+            r: t,
+            g: n,
+            b: o,
+            o: s,
+            complete: r
+            ? 'rgba(' + [t, n, o, s].join(',') + ')'
+            : 'rgb(' + [t, n, o].join(',') + ')',
+        }
+    )
+},
+```
+
+
+
+#### HSL和RGB转换原理
+
+##### HSL简介 #####
+
+色调饱和度亮度模式：
+
+  1. Hue(色调)。0(或360)表示红色，120表示绿色，240表示蓝色，也可取其他数值来指定颜色。取值为：0 - 360；
+  2. Saturation(饱和度)。取值为：0.0% - 100.0% ；
+  3. Lightness(亮度)。取值为：0.0% - 100.0% 。
+  4. 不包含透明度：`hsl(210,100%,50%)`，包含透明度：`hsla(210,100%,50%,0.5)`
+
+##### RGB简介 #####
+
+  1. 红绿蓝三个颜色通过不同亮度,外加alpha透明度，来组合成为需要的颜色；
+  2. 0为最暗, 255为最亮，`rgb(0,0,0)`为黑色, `rgb(255,255,255)`为白色；
+  3. 透明度表示：`rgba(255,0,0,0.5)`。
+
+##### 转换原理 #####
+
+- **`RGB`转`HSL`的算法描述**
+
+ 1. 把`RGB`值转成【0，1】中数值。
+
+ 2. 找出R,G和B中的最大值。
+
+ 3. 计算亮度：`L=(maxcolor + mincolor)/2`
+
+ 4. 如果最大和最小的颜色值相同，即表示灰色，那么S定义为0，而H未定义并在程序中通常写成0。
+
+ 5. 否则，根据亮度L计算饱和度S：
+
+    ```JavaScript
+    if(L<0.5){
+        S=(maxcolor-mincolor)/(maxcolor + mincolor);
+    }
+    if(L>=0.5){
+        S=(maxcolor-mincolor)/(2.0-maxcolor-mincolor);
+    }
+    ```
+
+ 6. 计算色调H：
+
+    ```JavaScript
+    if(R=maxcolor){
+        H=(G-B)/(maxcolor-mincolor);
+    }else if(G=maxcolor){
+        H=2.0+(B-R)/(maxcolor-mincolor);
+    }else if(B=maxcolor){
+        H=4.0+(R-G)/(maxcolor-mincolor);
+    }
+    ```
+
+    `H *= 60`，如果H为负值，则加360。
+
+说明：
+
+  1. 由步骤3的式子可以看出亮度仅与图像的最多颜色成分和最少的颜色成分的总量有关。亮度越小，图像越趋于黑色。亮度越高图像越趋于明亮的白色。
+  2. 由步骤5的式子可以看出饱和度与图像的最多颜色成分和最少的颜色成分的差量有关。饱和度越小，图像越趋于灰度图像。饱和度越大，图像越鲜艳，给人的感觉是彩色的，而不是黑白灰的图像。
+  3. 色调觉得了人对图像的不同的颜色感受。
+  4. 从第6步的计算看，H分成0～6区域。RGB颜,色空间是一个立方体而HSL颜色空间是两个六角形锥体，其中的L是RGB立方体的主对角线。因此，RGB立方体的顶点：红、黄、绿、青、蓝和品红就成为HSL六角形的顶点，而数值0～6就告诉我们H在哪个部分。
+
+- **`HSL`转`RGB`的算法描述**
+
+ 1. `if(S==0)`,表示灰色，定义R,G和B都为L.
+
+ 2. 否则，测试L:
+
+    ```JavaScript
+    if(L<0.5){
+        temp2=L*(1.0+S);
+    }
+    if(L>=0.5){
+        temp2=L+S-L*S;
+    }
+    ```
+
+ 3. `temp1=2.0*L-temp2`
+
+ 4. 把H转换到0～1, `H /= 360`
+
+ 5. 对于R,G,B，计算另外的临时值temp3。方法如下：
+
+    ```JavaScript
+    for R, temp3=H+1.0/3.0
+    for G, temp3=H
+    for B, temp3=H-1.0/3.0
+    if(temp3<0){
+        temp3=temp3+1.0;
+    }
+    if(temp3>1){
+        temp3=temp3-1.0;
+    }
+    ```
+
+ 6. 对于R,G,B做如下测试：
+
+    ```JavaScript
+    If(6.0*temp3<1){
+        color=temp1+(temp2-temp1)*6.0*temp3;
+    }else if(2.0*temp3<1){
+        color=temp2;
+    }else if(3.0*temp3<2){
+        color=temp1+(temp2-temp1)*((2.0/3.0)-temp3)*6.0;
+    }else{
+        color=temp1;
+    }
+    ```
+
+更详细可查看：<https://en.wikipedia.org/wiki/HSL_and_HSV#From_HSL>
+
+文中部分内容参考：<https://www.cnblogs.com/daiguagua/p/3311756.html>
+
 ### 循环队列
+
 使用队列来存储历史颜色
+
+```javascript
+//  循环队列存储历史颜色
+class ColorCircularQueue {
+    /**
+     * 构造函数，初始化
+     * @param {*} k 队列容量
+     */
+    constructor(k) {
+        // 容量
+        this.capacity = k
+        // 存储数据的数组
+        this.elements = new Array(k)
+        // 队尾指针
+        this.rear = -1
+        // 队首指针
+        this.front = 0
+        // 记录队列中元素的数量
+        this.count = 0
+    }
+
+    /**
+     * 插入元素
+     * @param {*} value 插入值
+     */
+    enQueue(value) {
+        if (this.count === this.capacity) {
+            // 队列已满，移除第一个元素
+            this.front = (this.front + 1) % this.capacity
+        } else {
+            // 增加计数
+            this.count++
+        }
+        // 插入新元素到数组末尾
+        this.rear = (this.rear + 1) % this.capacity
+        this.elements[this.rear] = value
+    }
+
+    // 移除队首元素
+    deQueue() {
+        if (this.isEmpty()) {
+            return false
+        }
+        // 将 front 移动到下一个元素
+        this.front = (this.front + 1) % this.capacity
+        // 减少计数
+        this.count--
+        return true
+    }
+
+    // 获取队首元素
+    Front() {
+        if (this.isEmpty()) {
+            return -1
+        }
+        return this.elements[this.front]
+    }
+
+    // 获取队尾元素
+    Rear() {
+        if (this.isEmpty()) {
+            return -1
+        }
+        return this.elements[this.rear]
+    }
+
+    /**
+     * 判断队列是否为空
+     * @returns 布尔值
+     */
+    isEmpty() {
+        return this.count === 0
+    }
+
+    /**
+     * 判断队列是否已满
+     * @returns 布尔值
+     */
+    isFull() {
+        return this.count === this.capacity
+    }
+
+    /**
+     * 清除队列
+     */
+    clear() {
+        this.elements = new Array(this.capacity)
+        this.front = 0
+        this.rear = -1
+        this.count = 0
+    }
+
+    /**
+     * 打印队列
+     * @returns 直接输出
+     */
+    print() {
+        console.log('队列中元素：')
+        if (this.isEmpty()) {
+            console.log('队列为空')
+            return
+        }
+        let str = ''
+        for (let i = 0; i < this.count; i++) {
+            str += this.elements[(this.front + i) % this.capacity] + ' '
+        }
+        console.log(str)
+    }
+
+    /**
+     * 获取队列
+     * @returns 数组格式（当前队列中的所有元素）
+     */
+    getQueue() {
+        let temArray = new Array(this.capacity)
+        if (this.isEmpty()) {
+            console.log('队列为空')
+            return
+        }
+        for (let i = 0; i < this.count; i++) {
+            temArray[i] = this.elements[(this.front + i) % this.capacity]
+        }
+        return temArray
+    }
+}
+```
+
+
 
 ### 滑块的实现
 ```html
@@ -128,14 +467,53 @@ mousedown(colorPickerBottomAlpha, colorPickerBottomAlphaSlide, colorPickerBottom
 user-select: none;
 ```
 
-### 颜色格式的转换
-使用工具类
-
 ### 色板的实现
-![alt text](./img/取色器画板.png)
+![画板](img/画板.png)
+
+![image-20250104173213736](img/取色器的画板中间移动.png)
+
+
+
+#### 介绍：
+
+**画板只控制SL，H通过色阶来控制，A通过透明条来控制**
+
+
+
+**画板中值的变化说明：**
+
+- **最左**
+
+**S不变，L从下到上0->100**
+
+
+
+- **最下：**
+
+**当一直在最小方左右移动的时候，其值一直是（0%，0%）**
+
+
+
+- **最右：**
+
+**当一直在最右边移动的时候，其S值一直是100，L从下到上0->50。特殊的：当移动到最下方的时候，其S值为0**
+
+
+
+- **最上：**
+
+**当一直在最上方移动的时候，其S值一直是100，L值从右到左50->100。特殊：当移动到最左边的时候，其S的值为0**
+
+
+
+- **中间：**
+
+**S值从左到右0->100， L值由两个方向的距离控制（下到上和右到左各占50，按照比例得到L的值）**
+
 
 
 ### 吸管拾色器
+
 原理：
 
 1. 用户交互：
@@ -453,7 +831,38 @@ document.addEventListener('DOMContentLoaded', function () {
 2. 将html和js文件脱出到一个目录，然后通过vscode的Live Server打开就可以了 
 
 
+
+## 2025.1.4ts版本封装bug说明
+
+- 《bug1》当通过色板选择颜色的时候，滑块移动到最左、最下的时候，在移动到其他地方，其颜色变成了红色为底色，但是色板的颜色还是原来的颜色，取到的颜色却是红色
+- 《bug2》当滑动透明条的时候，颜色值的透明度值不发生变化
+
+
+
+bug1解决办法：
+
+添加一个变量来记录当前色板的H值，在updateCurrentColor方法中使用`h = this.hue`来设置
+
+
+
+bug2解决办法：
+
+修改了颜色格式化方法
+
+
+
+
+
+
+
+
+
+
+
+
+
 # 效果展示
+
 ## 实现效果
 
 ![alt text](img/效果.png)
@@ -463,6 +872,10 @@ document.addEventListener('DOMContentLoaded', function () {
 ![alt texe](img/取色器.png)
 
 
+
+
+
+![image-20250104201311378](README.assets/image-20250104201311378.png)
 
 
 
@@ -483,7 +896,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
-#### 版本2.0
+#### 版本v2.0
 
 新增vue版本的取色器功能
 
@@ -495,19 +908,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
+#### 版本v3.0
+
+- 新增格式化输出，属性format
+- 优化ts封装的组件
+- 解决bug===当通过色板选择颜色的时候，滑块移动到最左、最下的时候，在移动到其他地方，其颜色变成了红色为底色，但是色板的颜色还是原来的颜色，取到的颜色却是红色
+
 
 
 # 注释
 
 参考博客及其他教程地址：
 - CSS HSL 颜色: https://www.w3ccoo.com/html/html_colors_hsl.asp#:~:text=HSL%20%E9%A2%9C%E8%89%B2%E5%80%BC.%20%E5%9C%A8
-
 - 色彩空间中的HSL、HSV、HSB区别: https://www.zhihu.com/question/22077462#:~:text=HSB%20%E5%92%8C%20HSL
-
 - 视频案例：https://www.bilibili.com/video/BV1KP4y187wQ/?spm_id_from=333.1007.top_right_bar_window_history.content.click
-
 - 博客：https://segmentfault.com/a/1190000040789940#item-3
-
 - 循环队列：https://zhuanlan.zhihu.com/p/266955673
-
 - 线性渐变：https://developer.mozilla.org/zh-CN/docs/Web/CSS/gradient/linear-gradient
+- 颜色格式转换：https://github.com/fxss5201/colorFormat
